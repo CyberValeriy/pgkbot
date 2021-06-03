@@ -6,9 +6,14 @@ const mongoose = require('mongoose');
 const dbToken = 'mongodb+srv://link777:Bw0RhEvb1fXJrm34@musordb.wlgem.mongodb.net/musorDB?retryWrites=true&w=majority';
 const Admins = require('./models/admins');
 const Users = require('./models/users');
+const express = require('express');
+const herokuPass = express();
+const PORT = 3000;
 
 bot.use(Telegraf.session({ttl:5000}));
-
+herokuPass.get('/',()=>{
+   console.log('Heroku passed!');
+});
 
 
 
@@ -36,6 +41,7 @@ const defaultMenu = [
    [{text:"Сайт коледжу",url:'https://www.college.uzhnu.edu.ua/'}]
 ];
 const adminMenu = [...defaultMenu,[{text:"Меню Адміна",callback_data:"ADMIN_MENU"}]];
+
 
 
 //BOT START
@@ -618,6 +624,7 @@ const runServer = async ()=>{
    catch(err){
       console.log('Connection error!');
    }
+   herokuPass.listen(PORT);
    bot.launch();
 }
 
