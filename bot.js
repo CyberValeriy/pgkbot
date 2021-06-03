@@ -8,11 +8,12 @@ const Admins = require('./models/admins');
 const Users = require('./models/users');
 const express = require('express');
 const herokuPass = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 bot.use(Telegraf.session({ttl:5000}));
-herokuPass.get('/',()=>{
+herokuPass.get('/',(req,res)=>{
    console.log('Heroku passed!');
+   res.send('Hello Heroku!');
 });
 
 
