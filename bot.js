@@ -8,7 +8,7 @@ const Admins = require('./models/admins');
 const Users = require('./models/users');
 const express = require('express');
 const herokuPass = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; //for heroku!
 
 bot.use(Telegraf.session({ttl:5000}));
 herokuPass.get('/',(req,res)=>{
@@ -29,10 +29,12 @@ herokuPass.get('/',(req,res)=>{
 
 let fullFileHandler = {};
 let fileType = '';
-let botShow = false;
-let botShowAdmin = false;
-let botAddAdmin = false;
-botDeleteAdmin = false;
+const clearSessionVariables = (ctx)=>{  
+   ctx.session.botShow = false;
+   ctx.session.botShowAdmin = false;
+   ctx.session.botAddAdmin = false;
+   ctx.session.botDeleteAdmin = false;
+}
 
 const defaultMenu = [
    [{text:"Найчacтіші запитання",callback_data:"QUESTIONS"}],
@@ -66,6 +68,7 @@ bot.start(async ctx=>{
    if(res == null){
          await ctx.reply("Вітаю " + ctx.from.first_name);
             bot.telegram.sendMessage(ctx.chat.id,'Введіть /help для огляду доступних команд');
+            clearSessionVariables(ctx);
          return;
       }
 
@@ -77,6 +80,7 @@ bot.start(async ctx=>{
                [{text:"Додавання та видалення адмінів",callback_data:'ADD/DELETE_ADMIN'}]
             ]
          }})
+         clearSessionVariables(ctx);
          ctx.session.isAdmin = true;
          console.log('!ADMIN LOGGED!');
       
@@ -93,6 +97,7 @@ bot.help(ctx=>{
             inline_keyboard:adminMenu
          }
       });
+      clearSessionVariables(ctx);
       return;
    }
 
@@ -102,7 +107,7 @@ bot.help(ctx=>{
             inline_keyboard:defaultMenu
          }
       });
-
+      clearSessionVariables(ctx);
 
 });
 
@@ -123,6 +128,7 @@ bot.action('QUESTIONS',ctx=>{
          ]
       }
    })
+   clearSessionVariables(ctx);
 })
 
 bot.action('SUPPORT',async ctx=>{
@@ -138,6 +144,7 @@ bot.action('SUPPORT',async ctx=>{
             ]
          }
       });
+      clearSessionVariables(ctx);
 });
 
 bot.action('SESSION',ctx=>{
@@ -154,6 +161,7 @@ bot.action('SESSION',ctx=>{
       })
 
    });
+   clearSessionVariables(ctx);
 });
 
 
@@ -172,7 +180,7 @@ bot.on('document',async ctx=>{
    const keyboard = [[{text:'Menu',callback_data:'ADMIN_MENU'}]];
 
    FS.readdir('./files',(err,filesNames)=>{
-      const filtredFiles = filesNames.filter(file=> file.slice(-3) == fileType);
+      const filtredFiles = filesNames.filter(file=> file.slice(-3) == fileType); //прибрати считування
       filtredFiles.forEach(fileName=>{
          keyboard.unshift([{text:`${fileName}`,callback_data:`${fileName}_ADMIN`}]);
       })
@@ -185,6 +193,7 @@ bot.on('document',async ctx=>{
       
    })
 }
+clearSessionVariables(ctx);
 });
 
       
@@ -211,7 +220,7 @@ bot.action('Documents',ctx=>{
       })
    });
    
-   
+   clearSessionVariables(ctx);
 })
 
 bot.action("Doc1",ctx=>{
@@ -222,6 +231,7 @@ bot.action("Doc1",ctx=>{
    },{
       disable_notification:true
    });
+   clearSessionVariables(ctx);
 });
 
 bot.action("Doc2",ctx=>{
@@ -232,6 +242,7 @@ bot.action("Doc2",ctx=>{
    },{
       disable_notification:true
    });
+   clearSessionVariables(ctx);
 });
 
 bot.action("Menu",ctx=>{
@@ -245,6 +256,7 @@ bot.action("Menu",ctx=>{
             inline_keyboard:adminMenu
          }
       });
+      clearSessionVariables(ctx);
       return;
    }
    
@@ -254,7 +266,7 @@ bot.action("Menu",ctx=>{
             inline_keyboard:defaultMenu
          }
       });
-      
+      clearSessionVariables(ctx);
    });
    
    bot.action("spiciality",async ctx=>{
@@ -270,6 +282,7 @@ bot.action("Menu",ctx=>{
                ]
             }
          })
+         clearSessionVariables(ctx);
    });
       
 
@@ -289,6 +302,7 @@ bot.action('criter',ctx=>{
          ]
       }
    })
+   clearSessionVariables(ctx);
    
 });
 
@@ -307,6 +321,7 @@ bot.action("PRIYM",ctx=>{
          ]
       }
    })
+   clearSessionVariables(ctx);
    
 });
 
@@ -321,11 +336,13 @@ bot.action("GRAPHIC_PRIYM",ctx=>{
    -П'ятниця
    -Субота(вихідний)
    -Неділя(вихідний)`);
+   clearSessionVariables();
 });
 
 bot.action("PHONE_PRIYM",ctx=>{
    ctx.answerCbQuery();
    ctx.reply('(0312) 61-33-45');
+   clearSessionVariables(ctx);
 });
 
 bot.action('ADMIN_MENU',ctx=>{
@@ -340,6 +357,7 @@ bot.action('ADMIN_MENU',ctx=>{
          ]
       }
    });
+   clearSessionVariables(ctx);
 });
 
 
@@ -347,7 +365,7 @@ bot.action('ADMIN_FILES',ctx=>{
    ctx.answerCbQuery();
    ctx.deleteMessage();
    ctx.reply('Надішліть файл для заміни(doc/pdf):');
-   
+   clearSessionVariables(ctx);
 });
 
 bot.action('ADD/DELETE_ADMIN',ctx=>{
@@ -363,7 +381,7 @@ bot.action('ADD/DELETE_ADMIN',ctx=>{
          ]
       }
    });
-   
+   clearSessionVariables(ctx);
 });
 
 
@@ -371,14 +389,13 @@ bot.action('ADD/DELETE_ADMIN',ctx=>{
 
 bot.on('text',async(ctx,next)=>{
    console.log(ctx.message.text);
-   if(!botShowAdmin){
+   if(!ctx.session.botShowAdmin){
       next();
       return;
    }
    const admins = await Admins.find({first_name:ctx.message.text.trim()});
    if(admins == null){
-      botShowAdmin = false;
-
+      clearSessionVariables(ctx);
       bot.telegram.sendMessage(ctx.chat.id,"Адміна з таким іменем не знайдено",{
          reply_markup:{
             inline_keyboard:[
@@ -394,7 +411,8 @@ bot.on('text',async(ctx,next)=>{
    for(admin of admins){
       ctx.reply(`First name: ${admin.first_name} \nLast name: ${admin.last_name} \nID: ${Number(admin._id)}`);
    }
-   botShowAdmin = false;
+   clearSessionVariables(ctx);
+   return;
 
 })
 
@@ -403,14 +421,13 @@ bot.on('text',async(ctx,next)=>{
 
 
 bot.on('text',async(ctx,next)=>{
-   if(!botShow){
+   if(!ctx.session.botShow){
       next();
       return;
    }
    const users = await Users.find({first_name:ctx.message.text.trim()});
    if(users == null){
-      botShow = false;
-
+      ctx.answerCbQuery();
       bot.telegram.sendMessage(ctx.chat.id,"Користувача з таким іменем не знайдено",{
          reply_markup:{
             inline_keyboard:[
@@ -421,33 +438,33 @@ bot.on('text',async(ctx,next)=>{
       });
       return;
    }
-   // ctx.reply(`First name: ${user.first_name} \nLast name: ${user.last_name} \nID: ${user._id}`);
    const counter = users.length;
    await ctx.reply(`Було знайдено ${counter} коритсувача(ів) з іменем ${ctx.message.text.trim()}`)
    for(user of users){
-      ctx.reply(`First name: ${user.first_name} \nLast name: ${user.last_name} \nID: ${Number(user._id)}`);
+     await ctx.reply(`First name: ${user.first_name} \nLast name: ${user.last_name} \nID:${Number(user._id)}`);
    }
-   botShow = false;
+   clearSessionVariables(ctx);
+   return
 })
 
 
 
 bot.on('text', async(ctx,next)=>{
    console.log(ctx.message.text.trim());
-   if(Number(ctx.message.text.trim()) == NaN || !botAddAdmin){
+   if(Number(ctx.message.text.trim()) == NaN || !ctx.session.botAddAdmin){
       next();
       return;
    };
    const user = await Users.findById({_id:ctx.message.text.trim()});
    if(user == null){
       ctx.reply(`Не знайдено користувача з Id ${ctx.message.text.trim()}`);
-      botAddAdmin = false;
+      clearSessionVariables(ctx);
       return;
    }
    const adminCheck = await Admins.findById({_id:ctx.message.text.trim()});
    if(adminCheck != null){
       ctx.reply('Користувач вже являється адміном!');
-      botAddAdmin = false;
+      clearSessionVariables(ctx);
       return;
    }
    await new Admins({
@@ -456,15 +473,16 @@ bot.on('text', async(ctx,next)=>{
       last_name:user.last_name,
       _id:user._id
    }).save();
-   botAddAdmin = false;
+   clearSessionVariables(ctx);;
    ctx.reply('Користувачa додано як адміна!');
+   return
 
 });
 
 
 bot.on('text', async(ctx,next)=>{
    console.log(ctx.message.text.trim());
-   if(Number(ctx.message.text.trim()) == NaN || !botDeleteAdmin){
+   if(Number(ctx.message.text.trim()) == NaN || !ctx.session.botDeleteAdmin){
       next();
       return;
    };
@@ -472,7 +490,7 @@ bot.on('text', async(ctx,next)=>{
    console.log(admin);
    if(admin == null){
       ctx.reply('Немає адміністратора з таким id!'); // написати про повтор дії
-      botDeleteAdmin = false;
+      clearSessionVariables(ctx);
       return;
    }
    ctx.reply('Адміністратора успішно видалено!');
@@ -486,6 +504,7 @@ bot.on('callback_query',async (ctx,next)=>{
 if(ctx.callbackQuery.data == "SHOW"){
    ctx.answerCbQuery();
    ctx.deleteMessage();
+   clearSessionVariables(ctx);
    bot.telegram.sendMessage(ctx.chat.id,"Оберіть, чиї данні переглянути:",{
       reply_markup:{
          inline_keyboard:[
@@ -493,26 +512,30 @@ if(ctx.callbackQuery.data == "SHOW"){
             [{text:"Користувач",callback_data:"SHOW_USER"}],
             [{text:"Назад",callback_data:"ADD/DELETE_ADMIN"}],
          ]
-      }
+      }  
    });
 
 }else if(ctx.callbackQuery.data == 'ADD_ADMIN'){
+   ctx.answerCbQuery();
    await ctx.replyWithVideo({source:'./files/instruction.MP4'});
    ctx.reply("Id зможете знайти в пункті 'Вивести дані'\nВнесіть Id користувача:");
-   botAddAdmin = true;
+   ctx.session.botAddAdmin = true;
 
 }else if(ctx.callbackQuery.data == 'DELETE_ADMIN'){
+   ctx.answerCbQuery();
    await ctx.replyWithVideo({source:'./files/instruction.MP4'});
    ctx.reply("Id зможете знайти в пункті 'Вивести дані'\nВнесіть Id користувача:");
-   botDeleteAdmin = true;
+   ctx.session.botDeleteAdmin = true;
    
 }else if(ctx.callbackQuery.data == 'SHOW_ADMIN'){
+   ctx.answerCbQuery();
    ctx.reply("Внесіть ім'я адміністратора:");
-   botShowAdmin = true;
+   ctx.session.botShowAdmin = true;
 
 }else if(ctx.callbackQuery.data == 'SHOW_USER'){
+   ctx.answerCbQuery();
    ctx.reply("Внесіть ім'я користувача:");
-   botShow = true;
+   ctx.session.botShow = true;
    
 }else{
    console.log('next');
@@ -560,6 +583,7 @@ bot.on('callback_query',(ctx,next)=>{
             console.log(err);
             fileName = null;
          }
+         clearSessionVariables(ctx);
       });
       ctx.deleteMessage();
       ctx.answerCbQuery();
@@ -572,6 +596,7 @@ bot.on('callback_query',(ctx,next)=>{
          }
       });
    }else{
+      clearSessionVariables(ctx);
       console.log('Not this type bruh');
       ctx.reply('Не правильний тип файлу');
       ctx.answerCbQuery();
@@ -584,7 +609,7 @@ bot.on('callback_query',(ctx,next)=>{
 
 bot.on("callback_query",ctx=>{
    ctx.answerCbQuery();
-   
+   clearSessionVariables(ctx);
    bot.telegram.sendChatAction(ctx.chat.id,'upload_document');
    if(ctx.callbackQuery.data == "His"){
       
