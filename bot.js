@@ -1,9 +1,9 @@
 const { Telegraf} = require('telegraf');
-const bot = new Telegraf('1610913780:AAHdTStzXdGNkYfTEgIlIVeQHFVuZSXamTE');
+const bot = new Telegraf('YOUR TOKEN');
 const FS = require('fs');
 const axios = require('axios');
 const mongoose = require('mongoose');
-const dbToken = 'mongodb+srv://link777:Bw0RhEvb1fXJrm34@musordb.wlgem.mongodb.net/musorDB?retryWrites=true&w=majority';
+const dbToken = 'YOUR DB TOKEN(MONGO)';
 const Admins = require('./models/admins');
 const Users = require('./models/users');
 const express = require('express');
